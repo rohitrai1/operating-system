@@ -185,11 +185,13 @@ void *handleTransaction(void *clientSocket)
                 /*************************************************************/
                 /* Lock as we enter the critical section                     */
                 /*************************************************************/
-                pthread_mutex_init(&mutex2, NULL);
+                // pthread_mutex_lock(&mutex2);
+
                 if (strcmp(op, "w") == 0)
                 {
                     if ((account_balance[i] - transacAmout) > 0)
                     {
+                        pthread_mutex_lock(&mutex2);
                         /*************************************************************/
                         /* Deducting the account balance                             */
                         /*************************************************************/
@@ -219,6 +221,7 @@ void *handleTransaction(void *clientSocket)
                         }
                         n = write(newSocket, "ACK: Amount Widrawn\n", 50);
                         cout << "Amount successfully windrawn" << endl;
+                        pthread_mutex_unlock(&mutex2);
                     }
                     else
                     {
@@ -234,6 +237,7 @@ void *handleTransaction(void *clientSocket)
                     /*************************************************************/
                     /* Depositing the account balance                            */
                     /*************************************************************/
+                    pthread_mutex_lock(&mutex2);
                     account_balance[i] = account_balance[i] + transacAmout;
 
                     /*************************************************************/
@@ -260,14 +264,18 @@ void *handleTransaction(void *clientSocket)
                     }
                     n = write(newSocket, "ACK: Amount deposited\n", 50);
                     cout << "Amount successfully deposited" << endl;
+                    pthread_mutex_unlock(&mutex2);
                 }
 
                 /*************************************************************/
                 /* Releasing the lock as we leave the critical section       */
                 /*************************************************************/
                 cout << "*********************************************" << endl;
-                pthread_mutex_unlock(&mutex2);
+                //release the lock
+                // pthread_mutex_unlock(&mutex2);
+                break;
             }
         }
     }
+    close(newSocket);
 }
