@@ -54,6 +54,7 @@ int main(int argc, char **argv)
     cout << "**************Records (Database)*************" << endl;
     while (theFile >> account_id[i] >> name[i] >> account_balance[i])
     {
+        pthread_mutex_lock(&mutex2);
         cout << account_id[i] << " " << name[i] << " " << account_balance[i] << endl;
         i++;
     }
@@ -74,12 +75,14 @@ int main(int argc, char **argv)
     /* Bind the socket                                           */
     /*************************************************************/
     int clientSocket;
+    pthread_mutex_lock(&mutex2);
     sockaddr_in sock_detail;
     sock_detail.sin_family = AF_INET;
     sock_detail.sin_port = htons(54002);
     sockaddr_in client;
     socklen_t clientSize;
 
+    pthread_mutex_lock(&mutex2);
     inet_pton(AF_INET, "0.0.0.0", &sock_detail.sin_addr); //character string src to a network address strcuture
     if (bind(tcp_socket, (struct sockaddr *)&sock_detail, sizeof(sockaddr_in)))
     {
@@ -103,6 +106,7 @@ int main(int argc, char **argv)
     /*************************************************************/
     while (true)
     {
+        pthread_mutex_lock(&mutex2);
         /*************************************************************/
         /* Accept the waiting connections                            */
         /*************************************************************/
@@ -113,6 +117,7 @@ int main(int argc, char **argv)
         }
         else
         {
+            pthread_mutex_lock(&mutex2);
             char host[NI_MAXHOST];
             memset(host, 0, NI_MAXHOST);
             inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
@@ -140,6 +145,7 @@ int main(int argc, char **argv)
 /*************************************************************/
 void *handleTransaction(void *clientSocket)
 {
+    pthread_mutex_lock(&mutex2);
     cout << "*********************************************" << endl;
     int newSocket = *((int *)clientSocket);
     char *clientData = (char *)malloc(256);
@@ -167,7 +173,7 @@ void *handleTransaction(void *clientSocket)
 
             token = strtok(NULL, " ");
             accountNo = atoi(token);
-
+            pthread_mutex_lock(&mutex2);
             token = strtok(NULL, " ");
             strcpy(op, token);
 
@@ -200,6 +206,7 @@ void *handleTransaction(void *clientSocket)
                         /*************************************************************/
                         /* Logic to update Records file with the new values          */
                         /*************************************************************/
+                        pthread_mutex_lock(&mutex2);
                         ifstream inFile("Records.txt");
                         ofstream outFile("Records1.txt");
 
@@ -208,11 +215,13 @@ void *handleTransaction(void *clientSocket)
                         {
                             if (strTemp == to_string(accountNo))
                             {
+                                pthread_mutex_lock(&mutex2);
                                 newFileValue = to_string(account_id[i]) + " " + name[i] + " " + to_string(account_balance[i]) + "\n";
                                 outFile << newFileValue;
                             }
                             else
                             {
+                                pthread_mutex_lock(&mutex2);
                                 outFile
                                     << strTemp << " " << strTemp1 << " " << strTemp2 << endl;
                             }
@@ -245,7 +254,7 @@ void *handleTransaction(void *clientSocket)
                     /*************************************************************/
                     ifstream inFile("Records.txt");
                     ofstream outFile("Records1.txt");
-
+                    pthread_mutex_lock(&mutex2);
                     string strTemp, strTemp1, strTemp2, newFileValue, replaceStr;
                     while (inFile >> strTemp >> strTemp1 >> strTemp2)
                     {
@@ -256,6 +265,7 @@ void *handleTransaction(void *clientSocket)
                         }
                         else
                         {
+                            pthread_mutex_lock(&mutex2);
                             outFile
                                 << strTemp << " " << strTemp1 << " " << strTemp2 << endl;
                         }
